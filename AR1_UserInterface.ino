@@ -20,7 +20,7 @@ void setup() {
   mySerial.begin(9600); //Default Baud for comm, it may be different for your Module
  
 }
-// Les nombres
+// Les nombres, UTF-8 code.
 const int int_equivalant_of[11] =
 {
   63,   // 0
@@ -35,23 +35,45 @@ const int int_equivalant_of[11] =
   111,  // 9
   113   // 10 - F
 };
-// foction de mis a jour des nombres
+
+
+// foction pour afficher les nombres avec le 7 segment
 void update_to_nombre(int nombre)
-{
+{	// --- Bloque le latch ---
+  	// Le latch devient non passant. Il memorise la valeur actuelle 
+	//    des entrée du latch (du registre à décalage) et maintient
+  	//   les valeurs des sorties Q0 à Q7.
+  	// Peut importe les modifications du registre a décalage, le 
+  	//   latch n'en tient pas compte. 
 	digitalWrite(latchPin, LOW);
-	shiftOut(dataPin, clockPin, MSBFIRST, int_equivalant_of[nombre]);  
+	
+	
+	// Cette instruction écrit chaque bit d'un byte/octet sur la 
+	//   dataPin du registre à décalage. Après chaque bit écrit,
+	//   la fonction fait osciller la clockPin pour que le registre
+	//   a décalage enregistre la valeur et effectue un décalage
+	//   du registre (vers la droite) pour recevoir la valeur suivante.
+	// La constante MSBFIRST (Most Significant Bit First) indique que
+	//   l'on commence l'écriture par le bit le plus important (de gauche
+	//   a droite) 
+	shiftOut(dataPin, clockPin, MSBFIRST, int_equivalant_of[nombre]);
+	
+	// --- Active le latch ---
+  	// Devient passant et applique les valeurs du registre à décalage
+  	// sur les sorties
 	digitalWrite(latchPin, HIGH);
 	delay(500);
 }
 
 void loop()
 {
-      	while ( !mySerial.available() ); // Loop here until new input is received
+      	// Repeter jusque'
+	while ( !mySerial.available() ); 
 
       	readData = mySerial.read(); // UTF-08 of +3symboles (input number(s)+ ctl U+000D 13 + ctl U+000A 10)
+	
       	// Use the code below to check the data that is being read
       	// Serial.print(readData);
-
       	if ( readData <= 57 && readData >= 48) {
         	update_to_nombre(readData - 48); // UTF-08 : 0 = 48
       	} else if ( readData == 70) { // UTF-08 70 = F
