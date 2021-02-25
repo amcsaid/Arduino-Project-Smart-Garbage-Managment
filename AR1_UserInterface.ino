@@ -1,26 +1,28 @@
-#include <SoftwareSerial.h>       // Cette bibliothèque émule une voie série.
-SoftwareSerial mySerial(11, 10);  // affectation des broches (RX, TX) et création de l'objet mySerial
+#include <SoftwareSerial.h>       	// Cette bibliothèque émule une voie série.
+
+// BT Setup
+SoftwareSerial mySerial(11, 10);  	// affectation des broches (RX, TX) et création de l'objet mySerial
+int readData = 0; 			// Le nombre a lire par BT
 
 // Communication série avec le 74HC595N
-int latchPin = 4;   // STCP of 74HC595N
-int clockPin = 7;   // SHCP of 74HC595N
-int dataPin = 6;    // DataS of 74HC595N
-
-
-int readData = 0; // Number read on BT
+// Il nous permet de commander indépendamment 8 sorties digitales à partir de 3 pins
+int latchPin = 4;   	// STCP 	- Latch (Storage Register Clock Input / STcp )
+int clockPin = 7;   	// SHCP 	- Clock (Shift Register Clock / SHcp)
+int dataPin = 6;    	// DataS 	- Data (Serial Data Input / DS)
 
 void setup() {
-  // set pins to output to control the shift register
+  // Les pins de 74HC595N, mis on OUTPUT
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
 
-  // BT SETUP
+  // La Baude de communiction entre les deux module BT
+  // Les baudes ont ete configure avec AT-commands 
   Serial.begin(9600);
-  mySerial.begin(9600); //Default Baud for comm, it may be different for your Module
- 
+  mySerial.begin(9600); 
 }
-// Les nombres, UTF-8 code.
+
+// UTF-8 code a envoyer vers 74HC595N pour afficher les nombres convenables
 const int int_equivalant_of[11] =
 {
   63,   // 0
@@ -37,43 +39,34 @@ const int int_equivalant_of[11] =
 };
 
 
-// foction pour afficher les nombres avec le 7 segment
+// fonction pour afficher les nombres avec le 7 segment, en envoyant un valeur a 74HC595N
 void update_to_nombre(int nombre)
-{	// --- Bloque le latch ---
-  	// Le latch devient non passant. Il memorise la valeur actuelle 
-	//    des entrée du latch (du registre à décalage) et maintient
-  	//   les valeurs des sorties Q0 à Q7.
-  	// Peut importe les modifications du registre a décalage, le 
-  	//   latch n'en tient pas compte. 
+{	// Bloque le latch
 	digitalWrite(latchPin, LOW);
 	
-	
-	// Cette instruction écrit chaque bit d'un byte/octet sur la 
-	//   dataPin du registre à décalage. Après chaque bit écrit,
-	//   la fonction fait osciller la clockPin pour que le registre
-	//   a décalage enregistre la valeur et effectue un décalage
-	//   du registre (vers la droite) pour recevoir la valeur suivante.
-	// La constante MSBFIRST (Most Significant Bit First) indique que
-	//   l'on commence l'écriture par le bit le plus important (de gauche
-	//   a droite) 
+	// dataPin >> pour envoyer chaque bit 
+	// clockPin >> vas etre osciller, 74HC595N enregistre le bit et effectue un décalage pour lire le bit suivant
+	// MSBFIRST (Most Significant Bit First) >> comencer par le MSF
+	// int_equivalant_of[nombre] >> c'est le byte a envoyer
 	shiftOut(dataPin, clockPin, MSBFIRST, int_equivalant_of[nombre]);
 	
-	// --- Active le latch ---
-  	// Devient passant et applique les valeurs du registre à décalage
-  	// sur les sorties
+	// Active le latch
+	// Prendre en compte les modifications
 	digitalWrite(latchPin, HIGH);
 	delay(500);
 }
 
 void loop()
 {
-      	// Repeter jusque'
+      	// Bouclez ici jusqu'à ce que l'entrée soit détectée
 	while ( !mySerial.available() ); 
-
-      	readData = mySerial.read(); // UTF-08 of +3symboles (input number(s)+ ctl U+000D 13 + ctl U+000A 10)
 	
-      	// Use the code below to check the data that is being read
-      	// Serial.print(readData);
+	// Lire l'entrée
+	// readData = 3 symboles UTF-08  (input number, ctl U+000D,  ctl U+000A)
+      	readData = mySerial.read(); // UTF-08 of +3symboles (input number+ ctl U+000D 13 + ctl U+000A 10)
+	
+      	// vérifier si les données lues sont valides
+	// les nombres 0 - 9 sont compris entre 57 et 48
       	if ( readData <= 57 && readData >= 48) {
         	update_to_nombre(readData - 48); // UTF-08 : 0 = 48
       	} else if ( readData == 70) { // UTF-08 70 = F
