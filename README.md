@@ -1,8 +1,5 @@
 # Arduino-Project-Smart-Garbage-Managment
 Project Arduino, SIE LP
-##Intoduction
-
-## Schema
 
 ## AR1: UserInterface
 ### 7-segment
