@@ -2,12 +2,12 @@
 #include <SoftwareSerial.h>
 
 // US 1: 
-#define trigPint 4  // ultrasonic 2 bt
+#define trigPint 6  // ultrasonic 2 bt
 #define echoPint 5  // ultrasonic 2 bt
 
 // US 2: 
 #define trigPin 6  // ultrasonic triger motor
-#define echoPin 7  // ultrasonic echo  motor
+#define echoPin 4  // ultrasonic echo  motor
 
 // BT Master
 SoftwareSerial myser(2,3);// TX,RX
@@ -17,23 +17,22 @@ Servo servo;
 
 void setup() {
   // ultrasonic 1 avec motor
-  pinMode(trigPin, OUTPUT); // ultrasonic triger motor
-  pinMode(echoPin, INPUT); // ultrasonic triger motor
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT); 
   
   // ultrasonic 2 avec BT
   pinMode(trigPint, OUTPUT);
   pinMode(echoPint, INPUT);
   myser.begin(9600);
   
-  //  motor
+  // motor
   servo.attach(10); 
 }
-
 
 void loop() {
   //
   //
-  // UltraSonic 2 avec BT
+  // UltraSonic 2 avec Motor
   //
   // 
   long duration, distance;
@@ -46,7 +45,7 @@ void loop() {
 
   duration = pulseIn(echoPin, HIGH);
 
-  if (duration < 680) { // eq to 10cm
+  if (duration < 680) { //équivalent a 10cm
     servo.write(90);
     delay(1500);
   } 
@@ -71,29 +70,28 @@ void loop() {
   durationt = pulseIn(echoPint, HIGH);
   Serial.println(durationt);
   
-
-  if (durationt > 1800) { // eq a vide
-    
+  if (durationt > 1800) {
+    toprint = 0;  // eq a vide
   } else if (durationt > 1600)  {
-    toprint = 1;
+    toprint = 1; // équivalent a 10% plein
   } else if (durationt > 1440)  {
-    toprint = 2;
+    toprint = 2; // équivalent a 20% plein
   } else if (durationt > 1280)  {
-    toprint = 3;
+    toprint = 3; // équivalent a 30% plein
   } else if (durationt > 1120)  {
-    toprint = 4;
+    toprint = 4; // équivalent a 40% plein
   } else if (durationt > 960)   {
-    toprint = 5;
+    toprint = 5; // équivalent a 50% plein
   } else if (durationt > 800)   {
-    toprint = 6;
+    toprint = 6; // équivalent a 60% plein
   } else if (durationt > 640)   {
-    toprint = 7;
+    toprint = 7; // équivalent a 70% plein
   } else if (durationt > 480)   {
-    toprint = 8;
+    toprint = 8; // équivalent a 80% plein
   } else {
-    toprint = 9;
+    toprint = 9; // équivalent a 90% plein
   } 
   
-  myser.write(toprint+48);
+  myser.write(toprint+48); // Envoyer le percentage par BT
   delay(500);
 }
